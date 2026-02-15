@@ -1,0 +1,23 @@
+[project]
+name = "fastapi-ecommerce"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "alembic>=1.18.1",
+    "asyncpg>=0.31.0",
+    "email-validator>=2.3.0",
+    "fastapi[all]>=0.128.0",
+    "greenlet>=3.3.0",
+    "psycopg2-binary>=2.9.11",
+    "pydantic>=2.12.5",
+    "sqlalchemy>=2.0.45",
+    "uvicorn[standard]>=0.40.0",
+    "passlib>=1.7.4",
+    "bcrypt==4.0.1",
+    "pyjwt>=2.11.0",
+    "python-dotenv>=1.2.1",
+    "python-multipart>=0.0.21",
+]
+
