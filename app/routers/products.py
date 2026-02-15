@@ -6,7 +6,7 @@ from app.auth import get_current_seller
 from app.db_depends import get_async_db
 from app.models import ProductModel, CategoryModel, User
 from app.schemas import ProductSchema, ProductUpdate
-from app.services.products import get_all_products, create_product
+from app.services.products import get_all_products, create_product, get_products_by_category
 
 # Создаём маршрутизатор для товаров
 router = APIRouter(
@@ -35,17 +35,11 @@ async def create_product(product: ProductModel = Depends(create_product)):
 
 
 @router.get("/category/{category_id}", response_model=list[ProductSchema], status_code=status.HTTP_200_OK)
-async def get_products_by_category(category_id: int, db: AsyncSession = Depends(get_async_db)):
+async def get_products_by_category(products: list[ProductModel] = Depends(get_products_by_category)):
     """
     Возвращает список товаров в указанной категории по её ID.
     """
-    stmt = select(CategoryModel).where(CategoryModel.id == category_id, CategoryModel.is_active == True)
-    category = (await db.scalars(stmt)).first()
-    if not category:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Category not found or inactive')
 
-    stmt = select(ProductModel).where(ProductModel.category_id == category_id, ProductModel.is_active == True)
-    products = (await db.scalars(stmt)).all()
     return products
 
 

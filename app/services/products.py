@@ -16,10 +16,18 @@ async def get_all_products(db: AsyncSession = Depends(get_async_db),
 
 
 async def create_product(
-        product_data: ProductCreate,  # ← из тела запроса
+        product_data: ProductCreate,
         db: AsyncSession = Depends(get_async_db),
-        products_repo: ProductRepository = Depends(get_product_repository),
         current_user: User = Depends(get_current_seller),
+        products_repo: ProductRepository = Depends(get_product_repository),
 ):
     product = await products_repo.create_product(db, product_data, current_user)
     return product
+
+
+async def get_products_by_category(category_id: int,
+                                   db: AsyncSession = Depends(get_async_db),
+                                   products_repo: ProductRepository = Depends(get_product_repository)):
+    products = await products_repo.get_products_by_category_id(db, category_id)
+
+    return products

@@ -28,16 +28,23 @@ class ProductRepository(CommonRepository):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail=f'Category with id {product.category_id} not found or inactive')
 
-        db_product = ProductModel(**product.model_dump(), seller_id=current_user.id)
+        db_product = self.model(**product.model_dump(), seller_id=current_user.id)
         db.add(db_product)
         await db.commit()
         await db.refresh(db_product)
         return db_product
 
+    async def get_products_by_category_id(self,
+                                          db: AsyncSession,
+                                          category_id
+                                          ):
+        stmt = select(CategoryModel).where(CategoryModel.id == category_id, CategoryModel.is_active.is_(True))
+        result = await db.execute(stmt)
+        category = result.scalars().first()
+        if not category:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Category not found or inactive')
 
-'''
-ProductRepository в app/repositories/products.py наследуется от CommonRepository и определяет model = ProductModel.
- Метод get_all_active_products строит запрос select(ProductModel).where(is_active=True), 
- исполняет его в сессии и извлекает все записи через scalars().all(). 
- Это позволяет легко расширять запросы для конкретных моделей.
-'''
+        stmt = select(self.model).where(self.model.category_id == category_id, self.model.is_active.is_(True))
+        result = await db.execute(stmt)
+        products = result.scalars().all()
+        return products
