@@ -1,5 +1,5 @@
 from fastapi import status, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ProductModel, CategoryModel, User
@@ -28,10 +28,12 @@ class ProductRepository(CommonRepository):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail=f'Category with id {product.category_id} not found or inactive')
 
-        db_product = ProductModel(**product.model_dump(), seller_id=current_user.id)
-        db.add(db_product)
-        await db.commit()
-        await db.refresh(db_product)
+        # db_product = ProductModel(**product.model_dump(), seller_id=current_user.id)
+        stmt = insert(self.model).values(**product.model_dump()).returning(self.model)
+        db_product = await db.execute(stmt)
+        # db.add(db_product)
+        # await db.commit()
+        # await db.refresh(db_product)
         return db_product
 
 
