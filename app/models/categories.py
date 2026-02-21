@@ -15,11 +15,7 @@ class CategoryModel(Base):
 
     parent_id: Mapped[int | None] = mapped_column(ForeignKey('categories.id', ondelete='CASCADE'), nullable=True)
     parent: Mapped['CategoryModel | None'] = relationship('CategoryModel',
-                                                     back_populates='children',
-                                                     remote_side='CategoryModel.id')
+                                                          back_populates='children',
+                                                          remote_side='CategoryModel.id')
     children: Mapped[list['CategoryModel']] = relationship('CategoryModel',
-                                                      back_populates='parent')
-
-
-
-
+                                                           back_populates='parent')

@@ -1,3 +1,4 @@
+from app.repositories.categories import CategoryRepository
 from app.repositories.products import ProductRepository
 
 
@@ -8,3 +9,8 @@ async def get_product_repository() -> ProductRepository:
     return ProductRepository()
 
 
+async def get_category_repository() -> CategoryRepository:
+    """
+    Возвращает репозиторий продукта.
+    """
+    return CategoryRepository()
