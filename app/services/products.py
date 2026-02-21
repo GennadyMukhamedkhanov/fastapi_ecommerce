@@ -6,16 +6,16 @@ from app.db_depends import get_async_db
 from app.models import User
 from app.repositories.dependencies import get_product_repository
 from app.repositories.products import ProductRepository
-from app.schemas import ProductCreate
+from app.schemas import ProductCreate, ProductUpdate
 
 
-async def get_all_products(db: AsyncSession = Depends(get_async_db),
-                           products_repo: ProductRepository = Depends(get_product_repository)):
+async def get_all_products_services(db: AsyncSession = Depends(get_async_db),
+                                    products_repo: ProductRepository = Depends(get_product_repository)):
     product = await products_repo.get_all_active_products(db)
     return product
 
 
-async def create_product(
+async def create_product_services(
         product_data: ProductCreate,
         db: AsyncSession = Depends(get_async_db),
         current_user: User = Depends(get_current_seller),
@@ -25,9 +25,36 @@ async def create_product(
     return product
 
 
-async def get_products_by_category(category_id: int,
-                                   db: AsyncSession = Depends(get_async_db),
-                                   products_repo: ProductRepository = Depends(get_product_repository)):
+async def get_products_by_category_services(category_id: int,
+                                            db: AsyncSession = Depends(get_async_db),
+                                            products_repo: ProductRepository = Depends(get_product_repository)):
     products = await products_repo.get_products_by_category_id(db, category_id)
 
     return products
+
+
+async def get_product_services(product_id: int,
+                               db: AsyncSession = Depends(get_async_db),
+                               products_repo: ProductRepository = Depends(get_product_repository)
+                               ):
+    product = await products_repo.get_product_id(db, product_id)
+    return product
+
+
+async def update_product_services(product_id: int,
+                                  product_update: ProductUpdate,
+                                  db: AsyncSession = Depends(get_async_db),
+                                  current_user: User = Depends(get_current_seller),
+                                  products_repo: ProductRepository = Depends(get_product_repository)
+                                  ):
+    product = await products_repo.update_product(db, product_id, product_update, current_user)
+    return product
+
+
+async def delete_product_services(product_id: int,
+                                  db: AsyncSession = Depends(get_async_db),
+                                  current_user: User = Depends(get_current_seller),
+                                  products_repo: ProductRepository = Depends(get_product_repository)
+                                  ):
+    product = await products_repo.delete_product(db, product_id, current_user)
+    return product
