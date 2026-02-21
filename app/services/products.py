@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_seller
@@ -21,6 +21,10 @@ async def create_product_services(
         current_user: User = Depends(get_current_seller),
         products_repo: ProductRepository = Depends(get_product_repository),
 ):
+    if current_user.role != UserRoles.seller:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only sellers can perform this action")
+        # raise seller_forbidden_action()
+
     product = await products_repo.create_product(db, product_data, current_user)
     return product
 

@@ -9,6 +9,7 @@ from sqlalchemy import select
 from app.models.users import User as UserModel
 from app.config import SECRET_KEY, ALGORITHM
 from app.db_depends import get_async_db
+from app.services.enum import UserRoles
 
 # Создаём контекст для хеширования с использованием bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -94,6 +95,6 @@ async def get_current_seller(current_user: UserModel = Depends(get_current_user)
     """
     Проверяет, что пользователь имеет роль 'seller'.
     """
-    if current_user.role != "seller":
+    if current_user.role != UserRoles.seller:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only sellers can perform this action")
     return current_user

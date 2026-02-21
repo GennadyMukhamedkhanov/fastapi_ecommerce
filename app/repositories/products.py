@@ -1,5 +1,9 @@
 from fastapi import status, HTTPException
+
 from sqlalchemy import select, update, insert
+
+from sqlalchemy import select, insert
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ProductModel, CategoryModel, User
