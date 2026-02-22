@@ -7,6 +7,7 @@ from app.models import User
 from app.repositories.dependencies import get_product_repository
 from app.repositories.products import ProductRepository
 from app.schemas import ProductCreate, ProductUpdate
+from app.services.enum import UserRoles
 
 
 async def get_all_products_services(db: AsyncSession = Depends(get_async_db),

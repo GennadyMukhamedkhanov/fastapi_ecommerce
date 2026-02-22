@@ -1,12 +1,6 @@
-from enum import StrEnum, auto
-from strenum import UppercaseStrEnum
+from enum import Enum as PyEnum
 
 
-class UserRoles(StrEnum):
-    seller = auto()
-    buyer = auto()
-
-
-class UserRolesUpper(UppercaseStrEnum):
-    SELLER = auto()
-    BUYER = auto()
+class UserRoles(str, PyEnum):
+    BUYER = "buyer"
+    SELLER = "seller"

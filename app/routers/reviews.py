@@ -1,10 +1,8 @@
 from fastapi import APIRouter, status, Depends
 
-from app.models import ProductModel
-from app.schemas import ProductSchema
-from app.services.products import (get_all_products_services, create_product_services,
-                                   get_products_by_category_services,
-                                   get_product_services, update_product_services, delete_product_services)
+from app.models import Reviews
+from app.schemas import ReviewsSchema
+from app.services.reviews import create_review_services
 
 # Создаём маршрутизатор для отзывов
 router = APIRouter(
@@ -13,8 +11,9 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=ProductSchema, status_code=status.HTTP_201_CREATED)
-async def create_product(product: ProductModel = Depends(create_product_services)):
+@router.post("/", response_model=ReviewsSchema, status_code=status.HTTP_201_CREATED)
+async def create_review(review: ReviewsSchema = Depends(create_review_services)):
     """
-    Создаёт новый товар.
+    Создаёт новый комментарий.
     """
+    return review
