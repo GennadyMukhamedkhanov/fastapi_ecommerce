@@ -1,5 +1,8 @@
 from pydantic import BaseModel, Field, ConfigDict, EmailStr, SecretStr
 from decimal import Decimal
+from datetime import datetime
+
+from app.models.reviews import GradeEnum
 
 
 class CategoryCreate(BaseModel):
@@ -100,3 +103,49 @@ class RefreshTokenRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class ReviewsCreate(BaseModel):
+    """
+    Модель для создания комментария.
+    Используется в POST запросах.
+    """
+    comment: str | None = Field(
+        None,
+        min_length=3,
+        max_length=500,
+        description="Комментарий (3-500 символов)"
+    )
+
+    grade: GradeEnum = Field(..., ge=1, le=5, description="Оценка товара")
+    product_id: int = Field(..., description='ID товара')
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "comment": "Отличный товар!",
+                "grade": 5,
+                "product_id": 42
+            }
+        }
+    )
+
+
+class ReviewsSchema(BaseModel):
+    """
+    Модель для ответа с данными комментария.
+    Используется в GET-запросах.
+    """
+    id: int = Field(..., description="Уникальный идентификатор комментария")
+    comment: str | None = Field(None, description="Текст комментария, если есть")
+    comment_date: datetime = Field(..., description='Дата создания комментария')
+    grade: GradeEnum = Field(..., description='Оценка товара (1-5)')
+    is_active: bool = Field(..., description='Активен ли комментарий')
+    user_id: int = Field(..., description='ID автора комментария')
+    product_id: int = Field(..., description='ID товара, к которому относится комментарий')
+
+    # Дополнительная информация (если нужно)
+    author_name: str | None = Field(None, description='Имя автора')
+    product_name: str | None = Field(None, description='Название товара')
+
+    model_config = ConfigDict(from_attributes=True)

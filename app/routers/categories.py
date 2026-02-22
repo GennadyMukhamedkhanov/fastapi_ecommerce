@@ -1,12 +1,8 @@
-from fastapi import APIRouter, status, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, status, Depends
 
 from app.auth import get_current_user, get_current_seller
-from app.db_depends import get_async_db
-from sqlalchemy import select, update, delete
-
 from app.models import CategoryModel
-from app.schemas import CategorySchema, CategoryCreate
+from app.schemas import CategorySchema
 from app.services.categories import get_all_categories_services, create_category_services, update_category_services, \
     delete_category_services
 

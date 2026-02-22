@@ -58,8 +58,8 @@ async def update_product(product: ProductModel = Depends(update_product_services
     return product
 
 
-@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_product(product=Depends(delete_product_services)):
+@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(delete_product_services)])
+async def delete_product():
     """
     Удаляет товар по его ID.
     """
