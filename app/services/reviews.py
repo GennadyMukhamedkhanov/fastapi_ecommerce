@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import Depends, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user
@@ -21,6 +21,15 @@ async def get_all_reviews_services(
     :return: Список активных отзывов.
     """
     reviews = await reviews_repo.get_all_reviews(db)
+    return reviews
+
+
+async def get_product_reviews_services(
+        product_id: int = Path(..., ge=1, description="ID активного продукта"),
+        db: AsyncSession = Depends(get_async_db),
+        reviews_repo: ReviewRepository = Depends(get_review_repository),
+):
+    reviews = await reviews_repo.get_product_all_reviews(db, product_id)
     return reviews
 
 

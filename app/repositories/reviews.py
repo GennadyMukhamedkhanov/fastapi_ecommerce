@@ -23,6 +23,32 @@ class ReviewRepository(CommonRepository):
         reviews = result.scalars().all()
         return reviews
 
+    async def get_product_all_reviews(self,
+                                      db: AsyncSession,
+                                      product_id: int):
+
+        """
+        Возвращает список всех активных отзывов для указанного товара.
+
+        :param db: Объект сессии к базе данных
+        :param product_id: ID товара
+        :return: Список активных отзывов
+        :raises HTTPException: If product with given id is not found or inactive
+        """
+        stmt = select(ProductModel).where(ProductModel.id == product_id, ProductModel.is_active.is_(True))
+        result = await db.execute(stmt)
+        product = result.scalars().first()
+
+        if not product:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f'Product with id {product_id} not found or inactive')
+
+        stmt = select(self.model).where(self.model.product_id == product_id, self.model.is_active.is_(True))
+        result = await db.execute(stmt)
+        reviews = result.scalars().all()
+
+        return reviews
+
     async def create_review(self,
                             db: AsyncSession,
                             review_data: ReviewsCreate,
