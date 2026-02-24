@@ -9,6 +9,21 @@ from app.repositories.reviews import ReviewRepository
 from app.schemas import ReviewsCreate, ReviewsSchema
 
 
+async def get_all_reviews_services(
+        db: AsyncSession = Depends(get_async_db),
+        reviews_repo: ReviewRepository = Depends(get_review_repository),
+):
+    """
+    Возвращает список всех активных отзывов.
+
+    :param db: Сессия к базе данных.
+    :param reviews_repo: Репозиторий для работы с отзывами.
+    :return: Список активных отзывов.
+    """
+    reviews = await reviews_repo.get_all_reviews(db)
+    return reviews
+
+
 async def create_review_services(
         review_data: ReviewsCreate,
         db: AsyncSession = Depends(get_async_db),
@@ -27,10 +42,10 @@ async def create_review_services(
     """
     db_review = await reviews_repo.create_review(db, review_data, current_user)
 
-    # 2. Загружаем связанные данные (автора и продукт)
+    #  Загружаем связанные данные (автора и продукт)
     await db.refresh(db_review, ['author', 'product'])
 
-    # 3. Формируем ответ со всеми полями
+    #  Формируем ответ со всеми полями
     return ReviewsSchema(
         id=db_review.id,
         comment=db_review.comment,

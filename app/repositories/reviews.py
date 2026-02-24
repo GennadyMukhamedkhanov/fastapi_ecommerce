@@ -10,6 +10,19 @@ from app.schemas import ReviewsCreate
 class ReviewRepository(CommonRepository):
     model = Reviews
 
+    async def get_all_reviews(self,
+                              db: AsyncSession):
+        """
+        Возвращает список всех активных отзывов.
+
+        :param db: Объект сессии к базе данных
+        :return: Список активных отзывов
+        """
+        stmt = select(self.model).where(self.model.is_active.is_(True))
+        result = await db.execute(stmt)
+        reviews = result.scalars().all()
+        return reviews
+
     async def create_review(self,
                             db: AsyncSession,
                             review_data: ReviewsCreate,
