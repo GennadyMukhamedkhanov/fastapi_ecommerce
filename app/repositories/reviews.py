@@ -88,3 +88,26 @@ class ReviewRepository(CommonRepository):
         await db.refresh(db_review)
 
         return db_review
+
+    async def delete_review(self,
+                            db: AsyncSession,
+                            review_id: int,
+                            current_user: User):
+
+        stmt = select(self.model).where(self.model.id == review_id, self.model.is_active.is_(True))
+        result = await db.execute(stmt)
+        review = result.scalars().first()
+
+        if not review:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f'Review with id {review_id} not found or inactive')
+
+        if review.user_id != current_user.id and current_user.role != 'admin':
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                detail='Only the author or the admin can delete the review')
+
+        review.is_active = False
+
+        await db.commit()
+
+        return review

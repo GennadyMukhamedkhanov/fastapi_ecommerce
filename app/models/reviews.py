@@ -28,3 +28,5 @@ class Reviews(Base):
 
     author: Mapped['User'] = relationship('User', back_populates='reviews')
     product: Mapped['ProductModel'] = relationship('ProductModel', back_populates='reviews')
+
+

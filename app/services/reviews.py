@@ -66,3 +66,25 @@ async def create_review_services(
         author_name=db_review.author.email if db_review.author else None,
         product_name=db_review.product.name if db_review.product else None
     )
+
+
+async def delete_review_services(
+        review_id: int = Path(..., ge=1, description="ID активного комментария"),
+        db: AsyncSession = Depends(get_async_db),
+        current_user: User = Depends(get_current_user),
+        reviews_repo: ReviewRepository = Depends(get_review_repository),
+):
+    review = await reviews_repo.delete_review(db, review_id, current_user)
+    await db.refresh(review, ['author', 'product'])
+
+    return ReviewsSchema(
+        id=review.id,
+        comment=review.comment,
+        comment_date=review.comment_date,
+        grade=review.grade,
+        is_active=review.is_active,
+        user_id=review.user_id,
+        product_id=review.product_id,
+        author_name=review.author.email if review.author else None,
+        product_name=review.product.name if review.product else None
+    )
