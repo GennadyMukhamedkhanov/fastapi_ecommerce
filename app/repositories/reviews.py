@@ -1,5 +1,5 @@
 from fastapi import status, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ProductModel, User, Reviews
@@ -68,7 +68,7 @@ class ReviewRepository(CommonRepository):
         product = result.scalars().first()
 
         if not product:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail=f'Product with id {review_data.product_id} not found or inactive')
 
         stmt = select(self.model).where(self.model.product_id == review_data.product_id,
@@ -78,12 +78,20 @@ class ReviewRepository(CommonRepository):
         review = result.scalars().first()
 
         if review:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+            raise HTTPException(status_code=status.HTTP_409_CONFLICTT,
                                 detail='You have already reviewed this product')
 
         db_review = self.model(**review_data.model_dump(exclude_unset=True),
                                user_id=current_user.id)
         db.add(db_review)
+        await db.flush()  # ← Отправляет в БД без коммита
+
+        stmt = select(func.avg(self.model.grade)).where(self.model.product_id == review_data.product_id,
+                                                        self.model.is_active.is_(True))
+        result = await db.execute(stmt)
+        avg_rating = result.scalars().one()
+        product.rating = avg_rating or 0.0
+
         await db.commit()
         await db.refresh(db_review)
 
@@ -107,6 +115,15 @@ class ReviewRepository(CommonRepository):
                                 detail='Only the author or the admin can delete the review')
 
         review.is_active = False
+        await db.flush()  # ← Отправляет в БД без коммита
+
+        stmt = select(func.avg(self.model.grade)).where(self.model.product_id == review.product_id,
+                                                        self.model.is_active.is_(True))
+        result = await db.execute(stmt)
+        avg_rating = result.scalars().first() or 0.0
+
+        stmt = update(ProductModel).where(ProductModel.id == review.product_id).values(rating=avg_rating)
+        await db.execute(stmt)
 
         await db.commit()
 

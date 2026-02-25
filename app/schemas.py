@@ -58,6 +58,7 @@ class ProductUpdate(BaseModel):
     category_id: int | None = Field(None, description="ID категории, к которой относится товар")
 
 
+
 class ProductSchema(BaseModel):
     """
     Модель для ответа с данными товара.
@@ -71,6 +72,7 @@ class ProductSchema(BaseModel):
     stock: int = Field(..., description="Количество товара на складе")
     category_id: int = Field(..., description="ID категории")
     is_active: bool = Field(..., description="Активность товара")
+    rating: float = Field(..., ge=0, le=5, description="Рейтинг товара")
 
     model_config = ConfigDict(from_attributes=True)
 
