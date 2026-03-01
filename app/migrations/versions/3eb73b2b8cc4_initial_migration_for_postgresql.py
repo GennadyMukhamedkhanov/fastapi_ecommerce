@@ -1,4 +1,4 @@
-"""Initial migration for PostgreSQL
+"""Initial migration for PostgreSQL Первая миграция
 
 Revision ID: 3eb73b2b8cc4
 Revises: 
