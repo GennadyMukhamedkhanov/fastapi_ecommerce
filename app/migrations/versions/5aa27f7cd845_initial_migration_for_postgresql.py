@@ -1,4 +1,4 @@
-"""Initial migration for PostgreSQL
+"""Initial migration for PostgreSQL Другой камент
 
 Revision ID: 5aa27f7cd845
 Revises: 1617876995dd
