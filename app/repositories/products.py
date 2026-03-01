@@ -1,9 +1,6 @@
 from fastapi import status, HTTPException
-
-from sqlalchemy import select, update, insert
-
-from sqlalchemy import select, insert
-
+from sqlalchemy import select, func
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ProductModel, CategoryModel, User
@@ -14,11 +11,40 @@ from app.schemas import ProductCreate
 class ProductRepository(CommonRepository):
     model = ProductModel
 
-    async def get_all_active_products(self, db: AsyncSession):
-        stmt = select(self.model).where(self.model.is_active.is_(True))
-        result = await db.execute(stmt)
-        product = result.scalars().all()
-        return product
+    async def get_all_active_products(self,
+                                      db: AsyncSession,
+                                      page: int,
+                                      page_size: int,
+                                      filters: list,
+                                      order_clauses
+                                      ):
+        stmt_total = (
+            select(func.count(self.model.id))
+            .where(*filters)
+        )
+        result = await db.execute(stmt_total)
+        total = result.scalar() or 0
+
+        # Корректируем page, если он слишком большой
+        max_page = max(1, (total + page_size - 1) // page_size)
+        if page > max_page and total > 0:
+            page = max_page
+
+        stmt_product = (
+            select(self.model)
+            .where(*filters)
+            .order_by(*order_clauses)
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        result = await db.execute(stmt_product)
+        products = result.scalars().all()
+        return {
+            "items": products,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
 
     async def create_product(self,
                              db: AsyncSession,

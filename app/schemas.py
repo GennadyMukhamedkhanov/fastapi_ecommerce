@@ -1,5 +1,11 @@
 from pydantic import BaseModel, Field, ConfigDict, EmailStr, SecretStr
 from decimal import Decimal
+from datetime import datetime
+from fastapi import Query
+from enum import Enum
+
+from app.models import ProductModel
+from app.models.reviews import GradeEnum
 
 
 class CategoryCreate(BaseModel):
@@ -68,8 +74,40 @@ class ProductSchema(BaseModel):
     stock: int = Field(..., description="Количество товара на складе")
     category_id: int = Field(..., description="ID категории")
     is_active: bool = Field(..., description="Активность товара")
+    rating: float = Field(..., ge=0, le=5, description="Рейтинг товара")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProductOut(BaseModel):
+    """API-ответ для товара"""
+    id: int
+    name: str
+    description: str | None = None
+    price: Decimal
+    image_url: str | None = None
+    stock: int
+    is_active: bool
+    rating: float | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True  # ← Это ключ! Работает с ORM
+    )
+
+
+class ProductList(BaseModel):
+    """
+    Список пагинации для товаров.
+    """
+    items: list[ProductOut] = Field(description="Товары для текущей страницы")
+    total: int = Field(ge=0, description="Общее количество товаров")
+    page: int = Field(ge=1, description="Номер текущей страницы")
+    page_size: int = Field(ge=1, description="Количество элементов на странице")
+
+    model_config = ConfigDict(
+        from_attributes=True,  # Для ORM
+        arbitrary_types_allowed=True  # Разрешает кастомные типы вроде ProductModel
+    )
 
 
 class UserSchema(BaseModel):
@@ -100,3 +138,72 @@ class RefreshTokenRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class ReviewsCreate(BaseModel):
+    """
+    Модель для создания комментария.
+    Используется в POST запросах.
+    """
+    comment: str | None = Field(
+        None,
+        min_length=3,
+        max_length=500,
+        description="Комментарий (3-500 символов)"
+    )
+
+    grade: GradeEnum = Field(..., ge=1, le=5, description="Оценка товара")
+    product_id: int = Field(..., description='ID товара')
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "comment": "Отличный товар!",
+                "grade": 5,
+                "product_id": 42
+            }
+        }
+    )
+
+
+class ReviewsSchema(BaseModel):
+    """
+    Модель для ответа с данными комментария.
+    Используется в GET-запросах.
+    """
+    id: int = Field(..., description="Уникальный идентификатор комментария")
+    comment: str | None = Field(None, description="Текст комментария, если есть")
+    comment_date: datetime = Field(..., description='Дата создания комментария')
+    grade: GradeEnum = Field(..., description='Оценка товара (1-5)')
+    is_active: bool = Field(..., description='Активен ли комментарий')
+    user_id: int = Field(..., description='ID автора комментария')
+    product_id: int = Field(..., description='ID товара, к которому относится комментарий')
+
+    # Дополнительная информация (если нужно)
+    author_name: str | None = Field(None, description='Имя автора')
+    product_name: str | None = Field(None, description='Название товара')
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Определяем возможные поля для сортировки
+class SortFieldEnum(str, Enum):
+    id = "id"
+    name = "name"
+    price = "price"
+    created_at = "created_at"
+    updated_at = "updated_at"
+
+
+class SortOrderEnum(str, Enum):
+    asc = "asc"
+    desc = "desc"
+
+
+# Pydantic модель для параметров сортировки
+class SortParams(BaseModel):
+    field: SortFieldEnum = Query(SortFieldEnum.id, description="Поле для сортировки")
+    order: SortOrderEnum = Query(SortOrderEnum.asc, description="Направление сортировки")
+
+    class Config:
+        use_enum_values = True

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, Depends
 
 from app.models import ProductModel
-from app.schemas import ProductSchema
+from app.schemas import ProductSchema, ProductList
 from app.services.products import (get_all_products_services, create_product_services,
                                    get_products_by_category_services,
                                    get_product_services, update_product_services, delete_product_services)
@@ -13,11 +13,10 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[ProductSchema], status_code=status.HTTP_200_OK)
-async def get_all_products(products: list[ProductModel] = Depends(get_all_products_services)):
+@router.get("/", response_model=ProductList, status_code=status.HTTP_200_OK)
+async def get_all_products(products: list[ProductList] = Depends(get_all_products_services)):
     """
     Возвращает список всех активных товаров.
-
 
     """
     return products
@@ -58,8 +57,8 @@ async def update_product(product: ProductModel = Depends(update_product_services
     return product
 
 
-@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_product(product=Depends(delete_product_services)):
+@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(delete_product_services)])
+async def delete_product():
     """
     Удаляет товар по его ID.
     """
