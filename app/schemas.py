@@ -1,7 +1,10 @@
 from pydantic import BaseModel, Field, ConfigDict, EmailStr, SecretStr
 from decimal import Decimal
 from datetime import datetime
+from fastapi import Query
+from enum import Enum
 
+from app.models import ProductModel
 from app.models.reviews import GradeEnum
 
 
@@ -58,7 +61,6 @@ class ProductUpdate(BaseModel):
     category_id: int | None = Field(None, description="ID категории, к которой относится товар")
 
 
-
 class ProductSchema(BaseModel):
     """
     Модель для ответа с данными товара.
@@ -75,6 +77,37 @@ class ProductSchema(BaseModel):
     rating: float = Field(..., ge=0, le=5, description="Рейтинг товара")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProductOut(BaseModel):
+    """API-ответ для товара"""
+    id: int
+    name: str
+    description: str | None = None
+    price: Decimal
+    image_url: str | None = None
+    stock: int
+    is_active: bool
+    rating: float | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True  # ← Это ключ! Работает с ORM
+    )
+
+
+class ProductList(BaseModel):
+    """
+    Список пагинации для товаров.
+    """
+    items: list[ProductOut] = Field(description="Товары для текущей страницы")
+    total: int = Field(ge=0, description="Общее количество товаров")
+    page: int = Field(ge=1, description="Номер текущей страницы")
+    page_size: int = Field(ge=1, description="Количество элементов на странице")
+
+    model_config = ConfigDict(
+        from_attributes=True,  # Для ORM
+        arbitrary_types_allowed=True  # Разрешает кастомные типы вроде ProductModel
+    )
 
 
 class UserSchema(BaseModel):
@@ -151,3 +184,26 @@ class ReviewsSchema(BaseModel):
     product_name: str | None = Field(None, description='Название товара')
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# Определяем возможные поля для сортировки
+class SortFieldEnum(str, Enum):
+    id = "id"
+    name = "name"
+    price = "price"
+    created_at = "created_at"
+    updated_at = "updated_at"
+
+
+class SortOrderEnum(str, Enum):
+    asc = "asc"
+    desc = "desc"
+
+
+# Pydantic модель для параметров сортировки
+class SortParams(BaseModel):
+    field: SortFieldEnum = Query(SortFieldEnum.id, description="Поле для сортировки")
+    order: SortOrderEnum = Query(SortOrderEnum.asc, description="Направление сортировки")
+
+    class Config:
+        use_enum_values = True
