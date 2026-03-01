@@ -37,6 +37,5 @@ async def get_session_manager_commit():
         yield session
 
 
-async def func():
-    async with get_session_manager_commit() as db:
+
 
