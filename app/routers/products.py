@@ -31,8 +31,8 @@ async def create_product(product: ProductModel = Depends(create_product_services
     return product
 
 
-@router.get("/category/{category_id}", response_model=list[ProductSchema], status_code=status.HTTP_200_OK)
-async def get_products_by_category(products: list[ProductModel] = Depends(get_products_by_category_services)):
+@router.get("/category/{category_id}", response_model=ProductList, status_code=status.HTTP_200_OK)
+async def get_products_by_category(products: ProductList = Depends(get_products_by_category_services)):
     """
     Возвращает список товаров в указанной категории по её ID.
     """

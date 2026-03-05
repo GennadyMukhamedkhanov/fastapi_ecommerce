@@ -3,6 +3,7 @@ from decimal import Decimal
 from datetime import datetime
 from fastapi import Query
 from enum import Enum
+from typing import Annotated
 
 from app.models import ProductModel
 from app.models.reviews import GradeEnum
@@ -207,3 +208,17 @@ class SortParams(BaseModel):
 
     class Config:
         use_enum_values = True
+
+
+class PageValidateSchema(BaseModel):
+    page: Annotated[int, Field(ge=1, description="Номер текущей страницы", default=1)]
+    page_size: Annotated[int, Field(ge=1, le=100, description="Количество элементов на странице", default=20)]
+
+
+class ProductFilterParamsSchema(BaseModel):
+    category_id: Annotated[int | None, Field(description="ID категории для фильтрации")] = None
+    min_price: Annotated[float | None, Field(description="Минимальная цена товара", ge=0)] = None
+    max_price: Annotated[float | None, Field(description="Максимальная цена товара", ge=0)] = None
+    in_stock: Annotated[
+        bool | None, Field(description="true — только товары в наличии, false — только без остатка")] = None
+    seller_id: Annotated[int | None, Field(description="ID продавца для фильтрации")] = None
