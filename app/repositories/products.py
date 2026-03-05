@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import ProductModel, CategoryModel, User
 from app.repositories.common import CommonRepository
 from app.schemas import ProductCreate
+from app.utils.common import _correct_page
 
 
 class ProductRepository(CommonRepository):
@@ -26,9 +27,7 @@ class ProductRepository(CommonRepository):
         total = result.scalar() or 0
 
         # Корректируем page, если он слишком большой
-        max_page = max(1, (total + page_size - 1) // page_size)
-        if page > max_page and total > 0:
-            page = max_page
+        page = _correct_page(page, total, page_size)
 
         stmt_product = (
             select(self.model)
@@ -67,7 +66,11 @@ class ProductRepository(CommonRepository):
 
     async def get_products_by_category_id(self,
                                           db: AsyncSession,
-                                          category_id
+                                          category_id,
+                                          page: int,
+                                          page_size: int,
+                                          filters: list,
+                                          order_sorting: list
                                           ):
         stmt = select(CategoryModel).where(CategoryModel.id == category_id, CategoryModel.is_active.is_(True))
         result = await db.execute(stmt)
@@ -75,10 +78,32 @@ class ProductRepository(CommonRepository):
         if not category:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Category not found or inactive')
 
-        stmt = select(self.model).where(self.model.category_id == category_id, self.model.is_active.is_(True))
+        stmt_total = (
+            select(func.count(self.model.id))
+            .where(self.model.category_id == category_id)
+            .where(*filters)
+        )
+        result = await db.execute(stmt_total)
+        total = result.scalar() or 0
+
+        # Корректируем page, если он слишком большой
+        page = _correct_page(page, total, page_size)
+
+        stmt = (
+            select(self.model)
+            .where(self.model.category_id == category_id, *filters)
+            .order_by(*order_sorting)
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
         result = await db.execute(stmt)
         products = result.scalars().all()
-        return products
+        return {
+            "items": products,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
 
     async def get_product_id(self,
                              db: AsyncSession,
